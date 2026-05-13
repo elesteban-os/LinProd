@@ -1,0 +1,131 @@
+# .gitignore para proyecto LinProd
+
+# ===== Dependencies =====
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ===== Node/Frontend =====
+dist/
+dist-ssr/
+*.local
+.env.local
+.env.*.local
+
+# ===== IDE =====
+.vscode/
+.vscode-test/
+.idea/
+*.iml
+.DS_Store
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# ===== OS =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===== Environment =====
+.env
+.env.local
+.env.*.local
+.env.production.local
+
+# ===== Logs =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ===== Cache =====
+.cache/
+*.cache
+.eslintcache
+.stylelintcache
+
+# ===== Temporary =====
+.tmp/
+.temp/
+tmp/
+temp/
+
+# ===== Docker =====
+.docker/
+docker-compose.override.yml
+
+# ===== Testing =====
+.coverage
+htmlcov/
+.pytest_cache/
+.nyc_output/
+
+# ===== Build =====
+build/
+dist/
+.next/
+out/
+
+# ===== Database =====
+*.db
+*.sqlite
+*.sqlite3
+*.psql
+
+# ===== Archivos =====
+API.md
+ARCHITECTURE.md
+CHANGELOG.md
+CONTRIBUTING.md
+DEVELOPMENT.md
+EXAMPLES.md
+INDEX.md
+PROJECT_STRUCTURE.md
+QUICKSTART.md
+START_HERE.md
+TESTING.md
