@@ -8,7 +8,7 @@ import logging
 from models import (
     Proceso, Tarea, EstadoSistema, ComandoSimulacion, 
     NuevoProceso, NuevaTarea,
-    ControlResponse
+    ControlResponse, StartRequest
 )
 from simulacion import simulador
 
@@ -134,6 +134,21 @@ async def control_simulacion(comando: ComandoSimulacion):
         status="success",
         mensaje=mensaje
     )
+
+
+@app.post("/simulacion/start", response_model=ControlResponse)
+async def iniciar_simulacion_con_target(start: StartRequest):
+    """Inicia o configura la simulación con target y modo (auto/manual)"""
+    simulador.set_target(start.target, start.auto)
+
+    if start.auto:
+        mensaje = f"Simulación iniciada (target={start.target})"
+    else:
+        mensaje = f"Target seteado a {start.target} (modo manual)"
+
+    await broadcast_estado(simulador.obtener_estado())
+
+    return ControlResponse(status="success", mensaje=mensaje)
 
 
 @app.post("/simulacion/step", response_model=ControlResponse)

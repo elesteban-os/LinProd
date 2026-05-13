@@ -10,6 +10,9 @@ export default function App() {
   const [tabActivo, setTabActivo] = useState('procesos');
   const [ws, setWs] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [modeAutomatic, setModeAutomatic] = useState(true);
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [startTargetInput, setStartTargetInput] = useState('0');
   
   // Estado global
   const {
@@ -54,17 +57,45 @@ export default function App() {
   // Handlers de control
   const handleInicio = async () => {
     try {
-      await api.iniciarSimulacion();
+      if (ejecutando) {
+        // Detener = reset
+        await api.resetearSimulacion();
+        return;
+      }
+
+      // Abrir modal para pedir target
+      setStartTargetInput('0');
+      setShowStartModal(true);
     } catch (error) {
       console.error('Error al iniciar:', error);
     }
   };
 
-  const handlePausa = async () => {
+  const confirmStartModal = async () => {
+    const target = Number(startTargetInput) || 0;
     try {
-      await api.pausarSimulacion();
+      await api.iniciarSimulacion(target, modeAutomatic);
+      setShowStartModal(false);
     } catch (error) {
-      console.error('Error al pausar:', error);
+      console.error('Error al iniciar desde modal:', error);
+    }
+  };
+
+  const cancelStartModal = () => {
+    setShowStartModal(false);
+  };
+
+  const handlePauseResume = async () => {
+    try {
+      if (!modeAutomatic) return;
+
+      if (ejecutando) {
+        await api.pausarSimulacion();
+      } else {
+        await api.resumeSimulacion();
+      }
+    } catch (error) {
+      console.error('Error al pausar/reanudar:', error);
     }
   };
 
@@ -116,6 +147,28 @@ export default function App() {
     }
   };
 
+  const handleToggleMode = async () => {
+    const nuevo = !modeAutomatic;
+    setModeAutomatic(nuevo);
+
+    // Si cambiamos a manual, pausar la simulación si estaba en automático
+    if (!nuevo && ejecutando) {
+      try {
+        await api.pausarSimulacion();
+      } catch (e) {
+        console.error('Error al pausar al cambiar a manual:', e);
+      }
+    }
+  };
+
+  const handleResetAll = async () => {
+    try {
+      await api.resetearSimulacion();
+    } catch (error) {
+      console.error('Error al resetear todo:', error);
+    }
+  };
+
   if (cargando) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50">
@@ -132,12 +185,40 @@ export default function App() {
       {/* Header */}
       <Header
         onInicio={handleInicio}
-        onPausa={handlePausa}
+        onPauseResume={handlePauseResume}
         onNext={handleNext}
+        onToggleMode={handleToggleMode}
+        onReset={handleResetAll}
+        modeAutomatic={modeAutomatic}
         ejecutando={ejecutando}
         tabActivo={tabActivo}
         setTabActivo={setTabActivo}
       />
+
+      {/* Modal de inicio */}
+      {showStartModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={cancelStartModal}></div>
+          <div className="bg-white rounded-lg shadow-xl p-6 z-10 w-full max-w-md">
+            <h3 className="text-lg font-bold mb-3">Iniciar simulación</h3>
+            <p className="text-sm text-gray-600 mb-4">Especifique cuántos productos desea procesar. 0 = indefinido.</p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Productos objetivo</label>
+              <input
+                type="number"
+                min="0"
+                value={startTargetInput}
+                onChange={(e) => setStartTargetInput(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={cancelStartModal} className="px-4 py-2 rounded-md border">Cancelar</button>
+              <button onClick={confirmStartModal} className="px-4 py-2 rounded-md bg-blue-600 text-white">Iniciar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Contenido principal */}
       <main className="p-6 max-w-7xl mx-auto">
@@ -169,6 +250,10 @@ export default function App() {
                     ) : (
                       <span className="text-gray-600">Pausado</span>
                     )}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Procesos completados:</span>{' '}
+                    {metricas.productos_completados || 0}
                   </p>
                   <p>
                     <span className="font-semibold">Procesos activos:</span> {procesos.length}

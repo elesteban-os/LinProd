@@ -10,9 +10,10 @@ export const api = {
   },
 
   // Controlar simulación
-  iniciarSimulacion: async () => {
-    const response = await axios.post(`${API_BASE}/simulacion/control`, {
-      comando: 'start',
+  iniciarSimulacion: async (target = 0, auto = true) => {
+    const response = await axios.post(`${API_BASE}/simulacion/start`, {
+      target,
+      auto,
     });
     return response.data;
   },
@@ -20,6 +21,13 @@ export const api = {
   pausarSimulacion: async () => {
     const response = await axios.post(`${API_BASE}/simulacion/control`, {
       comando: 'pause',
+    });
+    return response.data;
+  },
+
+  resumeSimulacion: async () => {
+    const response = await axios.post(`${API_BASE}/simulacion/control`, {
+      comando: 'start',
     });
     return response.data;
   },

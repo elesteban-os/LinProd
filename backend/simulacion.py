@@ -12,6 +12,7 @@ class SimuladorLinea:
         self.ejecutando = False
         self.t_actual = 0
         self.procesos = self._inicializar_procesos()
+        self.target_products: int = 0
         self.eventos = []
         self.metricas = {
             "productos_completados": 0,
@@ -89,6 +90,17 @@ class SimuladorLinea:
         self.eventos.append(f"t={self.t_actual}: {tarea.nombre} agregada en {proceso.nombre}")
         return tarea
 
+    def set_target(self, target: int, start: bool = False):
+        """Establece la cantidad objetivo de productos y opcionalmente inicia"""
+        try:
+            self.target_products = int(target)
+        except Exception:
+            self.target_products = 0
+
+        if start:
+            self.start()
+
+
     def eliminar_proceso(self, proceso_id: int) -> Proceso:
         """Elimina un proceso existente"""
         for index, proceso in enumerate(self.procesos):
@@ -146,6 +158,10 @@ class SimuladorLinea:
                             f"t={self.t_actual}: {tarea.nombre} completada en {proceso.nombre}"
                         )
                         self.metricas["productos_completados"] += 1
+                        # Verificar si alcanzó target
+                        if self.target_products > 0 and self.metricas["productos_completados"] >= self.target_products:
+                            self.eventos.append(f"t={self.t_actual}: Objetivo de {self.target_products} productos alcanzado")
+                            self.ejecutando = False
                 elif tarea.estado == "idle" and random.random() < 0.4:
                     tarea.estado = "procesando"
                     tarea.ciclos_actuales = 0
@@ -202,6 +218,7 @@ class SimuladorLinea:
             "tiempo_flujo": 0,
             "cuello_botella": None
         }
+        self.target_products = 0
     
     async def iniciar_loop(self):
         """Loop de simulación que avanza cada 1 segundo"""

@@ -52,3 +52,9 @@ class ControlResponse(BaseModel):
     status: str
     mensaje: str
     timestamp: datetime = Field(default_factory=datetime.now)
+
+
+class StartRequest(BaseModel):
+    """Datos para iniciar la simulación con target y modo"""
+    target: int = 0
+    auto: bool = True
