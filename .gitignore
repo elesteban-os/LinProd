@@ -1,0 +1,7 @@
+# Archivos compilados de Python
+*.pyc
+*.pyo
+*.pyd
+
+# Carpetas de caché de Python
+__pycache__/
