@@ -15,11 +15,6 @@ class Tarea():
     def asignar_producto(self, producto) -> None:
         self._esta_procesando = True
         self.producto = producto
-
-    """Eliminar despues de pruebas"""
-    def extraer_producto(self):
-        producto = self.producto
-        return producto
     
     def actualizar_espera_promedio(self) -> None:
         if self.tiempo_espera_promedio == 0:
