@@ -61,7 +61,8 @@ class Proceso:
             if self._contador_inactivo > self.tiempo_inactivo:
                 self.tiempo_inactivo = self._contador_inactivo 
     
-    def procesar_ciclo(self) -> None:
+    def procesar_ciclo(self):
+        producto_salida = None
         if self._primer_producto_recibido:
             PRIMERA_TAREA = 0
             primera_tarea_libre = not self.lista_tareas[PRIMERA_TAREA].esta_procesando()
@@ -70,9 +71,13 @@ class Proceso:
                 self.lista_tareas[PRIMERA_TAREA].asignar_producto(producto_actual)
             for tarea in self.lista_tareas:
                 producto_finalizado = tarea.procesar_ciclo()
-                if producto_finalizado is not None and not self._proceso_final:
-                    self._proceso_siguiente.agregar_producto(producto_finalizado)
+                if producto_finalizado is not None:
+                    if not self._proceso_final:    
+                        self._proceso_siguiente.agregar_producto(producto_finalizado)
+                    else:
+                        producto_salida = producto_finalizado
             self._actualizar_tiempo()
+        return producto_salida
 
     def obtener_estado(self) -> str:
         return f"""Proceso {self.id}
