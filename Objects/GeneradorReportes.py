@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional
 from queue import Queue
 from Objects.Proceso import Proceso
@@ -43,9 +44,9 @@ class GeneradorReportes:
                 
         return cuello_botella
 
-    def mostrar_stats(self, lista_procesos: List[Proceso], productos_finalizados: Queue[Producto]) -> dict:
+    def mostrar_stats(self, lista_procesos: List[Proceso], productos_finalizados: Queue[Producto]) -> str:
         """
-        Construye y devuelve un diccionario con las métricas requeridas 
+        Construye y devuelve un string JSON con las métricas requeridas 
         actualizadas al ciclo en curso.
         """
         tiempo_primer_producto = 0
@@ -87,12 +88,27 @@ class GeneradorReportes:
 
         promedio_espera_tareas = total_espera_tareas / cantidad_tareas if cantidad_tareas > 0 else 0
         
-        return {
+        info_procesos = []
+        for proceso in lista_procesos:
+            info_procesos.append({
+                "proceso": proceso.id,
+                "tareas_procesando": [tarea.id for tarea in proceso.lista_tareas if tarea.esta_procesando()],
+                "tiempo_total": proceso.tiempo_total,
+                "tiempo_inactivo": proceso.tiempo_inactivo
+            })
+        
+        datos = {
             "tiempo_primer_producto": tiempo_primer_producto,
             "tiempo_ultimo_producto": tiempo_ultimo_producto,
             "tiempo_promedio_linea": promedio,
             "tiempo_total_todos_productos": tiempo_total_procesamiento,
-            "cuello_de_botella": f"Proceso {cb.id}" if cb and cb.productos.qsize() > 0 else "Ninguno significativo",
+            "cuello_de_botella": cb.id if cb and cb.productos.qsize() > 0 else "Ninguno",
             "promedio_espera_tareas": promedio_espera_tareas,
-            "mayor_espera": f"Proceso {proc_max.id} - Tarea {tarea_max.id} (T. Espera: {max_espera})" if proc_max and max_espera > 0 else "Sin esperas"
+            "mayor_espera": max_espera if max_espera > 0 else 0,
+            "estado_procesos": info_procesos
         }
+        
+        return json.dumps(datos, indent=4)
+
+
+#Mandar en .json

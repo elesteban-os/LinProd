@@ -55,5 +55,19 @@ class LineaProduccion:
     def reanudar(self) -> None:
         """Reanuda la línea de producción"""
         self.en_pausa = False
+
+    def parar_linea(self) -> None:
+        """Verifica que la línea de producción esté vacía y detiene (pausa) todo si es así."""
+        linea_vacia = True
+        for proceso in self._lista_procesos:
+            # Chequea que la cola de productos esté vacía y que ninguna tarea esté procesando
+            hay_procesando = any(tarea.esta_procesando() for tarea in proceso.lista_tareas)
+            
+            if not proceso.productos.empty() or hay_procesando:
+                linea_vacia = False
+                break
+                
+        if linea_vacia:
+            self.en_pausa = True
        
 
