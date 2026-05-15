@@ -2,6 +2,7 @@ from Objects.LineaProduccion import LineaProduccion
 from Objects.Proceso import Proceso
 from Objects.Tarea import Tarea
 from Objects.Producto import Producto
+from Objects.GeneradorReportes import GeneradorReportes
 import time
 
 def test_linea_produccion():
@@ -27,6 +28,8 @@ def test_linea_produccion():
     # Agregando procesos a la línea
     linea.agregar_proceso(proceso1)
     linea.agregar_proceso(proceso2)
+
+  
     
     # Conectando procesos
     linea.conectar_proceso(proceso1, proceso2)
@@ -40,17 +43,34 @@ def test_linea_produccion():
         prod = Producto(i, f"Producto-{i}") # ID y producto id xd
         proceso1.agregar_producto(prod)
 
+    # Creando el generador de reportes
+    reportes = GeneradorReportes()
+    
     print("--- INICIANDO SIMULACION ---")
     # Correremos 15 ciclos como prueba
     for ciclo in range(15):
         print(f"\n>>>> Ciclo {ciclo + 1} <<<<")
         
+        # Pausa la línea un par de ciclos para evaluar funcion de pausa
+        if ciclo == 5:
+            print("[SISTEMA] Pausando línea de producción...")
+            linea.pausar()
+        if ciclo == 14:
+            print("[SISTEMA] Reanudando línea de producción...")
+            linea.reanudar()
+            
         # Actualizamos la línea (esto ejecuta procesar_ciclo internamente y aplica el sleep)
         linea.actualizacion()
         
         print(proceso1.obtener_estado())
         print(proceso2.obtener_estado())
         
+        # Obtenemos los reportes actuales del Generador
+        print("--- REPORTES EN VIVO ---")
+        stats = reportes.mostrar_stats(linea._lista_procesos, linea.productos_finalizados)
+        for stat, valor in stats.items():
+            print(f"> {stat}: {valor}")
+            
         if not linea.productos_finalizados.empty():
             print("--- PRODUCTOS FINALIZADOS RECOPILADOS ---")
             productos_salida = list(linea.productos_finalizados.queue)

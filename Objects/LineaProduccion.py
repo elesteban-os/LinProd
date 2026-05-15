@@ -10,6 +10,7 @@ class LineaProduccion:
         self._proceso_inicial: Optional[Proceso] = None
         self._proceso_final: Optional[Proceso] = None
         self._reloj: bool = False
+        self.en_pausa: bool = False
         
         self.tiempo_total_linea: int = 0
         self.productos_finalizados: Queue[Producto] = Queue()
@@ -33,11 +34,26 @@ class LineaProduccion:
         for proceso in self._lista_procesos:
             producto_terminado = proceso.procesar_ciclo()
             if producto_terminado is not None and proceso == self._proceso_final:
+                producto_terminado.tiempo_sal = self.tiempo_total_linea
                 self.productos_finalizados.put(producto_terminado)
 
     def actualizacion(self) -> None:
+        if self.en_pausa:
+            # Si esta pausado, igual simulamos el tiempo de retardo para la GUI 
+            # pero no avanzamos ciclo ni cálculos
+            time.sleep(1)
+            return
+
         self._reloj = True
         time.sleep(1) # Pausa de 1 segundo para simular tiempo real
         self.procesar_ciclo()
+
+    def pausar(self) -> None:
+        """Pausa la línea de producción"""
+        self.en_pausa = True
+
+    def reanudar(self) -> None:
+        """Reanuda la línea de producción"""
+        self.en_pausa = False
        
 
