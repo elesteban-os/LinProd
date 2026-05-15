@@ -36,16 +36,13 @@ export const TareaItem = ({ tarea }) => {
 
 export const ProcessCard = ({ proceso, onAddTarea, onDeleteProceso, onDeleteTarea }) => {
   const [mostrarForm, setMostrarForm] = useState(false);
-  const [nombreTarea, setNombreTarea] = useState('');
   const [ciclosTarea, setCiclosTarea] = useState(3);
 
   const handleSubmit = (event) => {
     event.preventDefault();
     onAddTarea(proceso.id, {
-      nombre: nombreTarea.trim() || undefined,
       ciclos_totales: Number(ciclosTarea) || 3,
     });
-    setNombreTarea('');
     setCiclosTarea(3);
     setMostrarForm(false);
   };
@@ -113,15 +110,6 @@ export const ProcessCard = ({ proceso, onAddTarea, onDeleteProceso, onDeleteTare
 
         {mostrarForm && (
           <form onSubmit={handleSubmit} className="border border-dashed border-slate-300 rounded-lg p-3 bg-slate-50 space-y-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Nombre de tarea</label>
-              <input
-                value={nombreTarea}
-                onChange={(event) => setNombreTarea(event.target.value)}
-                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                placeholder="Tarea nueva"
-              />
-            </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Ciclos necesarios</label>
               <input

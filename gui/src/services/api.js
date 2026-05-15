@@ -10,10 +10,9 @@ export const api = {
   },
 
   // Controlar simulación
-  iniciarSimulacion: async (target = 0, auto = true) => {
+  iniciarSimulacion: async (configuracion) => {
     const response = await axios.post(`${API_BASE}/simulacion/start`, {
-      target,
-      auto,
+      ...configuracion,
     });
     return response.data;
   },

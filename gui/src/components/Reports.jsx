@@ -51,51 +51,53 @@ export const ReportCard = ({ titulo, valor, subtitulo, acento = false }) => {
 };
 
 export const ReporteDashboard = ({ metricas }) => {
-  // Calcular métrica de cuello de botella (porcentaje)
-  const porcentajeCuello = 35; // Placeholder
-  
   return (
     <div className="bg-slate-50 rounded-lg p-6">
       <h2 className="text-2xl font-bold text-slate-900 mb-6">Reportes de la línea de producción</h2>
       
       {/* Grid de reportes */}
-      <div className="grid grid-cols-2 gap-6 mb-8">
-        <div className="grid grid-cols-3 gap-4">
-          <ReportCard 
-            titulo="Tiempo (t)" 
-            valor={metricas.tiempo_flujo || 0}
-            subtitulo="segundos"
-          />
-          <ReportCard 
-            titulo="Completadas" 
-            valor={metricas.productos_completados || 0}
-            subtitulo="productos"
-          />
-          <ReportCard 
-            titulo="Procesando" 
-            valor="7"
-            subtitulo="tareas"
-          />
-        </div>
-        
-        <div className="grid grid-cols-3 gap-4">
-          <ReportCard 
-            titulo="Tiempo promedio" 
-            valor="16.6"
-            subtitulo="ciclos"
-          />
-          <ReportCard 
-            titulo="Ciclos/tiempo" 
-            valor="6.21"
-            subtitulo="ciclos/seg"
-          />
-          <ReportCard 
-            titulo="Cuello de Botella" 
-            valor={porcentajeCuello + '%'}
-            subtitulo={metricas.cuello_botella || 'Proceso 3'}
-            acento={true}
-          />
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+        <ReportCard 
+          titulo="Tiempo primer producto" 
+          valor={metricas.tiempo_primer_producto ?? '-'}
+          subtitulo="segundos"
+        />
+        <ReportCard 
+          titulo="Tiempo último producto" 
+          valor={metricas.tiempo_ultimo_producto ?? '-'}
+          subtitulo="segundos"
+        />
+        <ReportCard 
+          titulo="Tiempo promedio de línea" 
+          valor={metricas.tiempo_promedio_linea ?? '-'}
+          subtitulo="segundos"
+        />
+        <ReportCard 
+          titulo="Cuello de botella" 
+          valor={metricas.cuello_botella || '-'}
+          subtitulo="Proceso con mayor congestión"
+          acento={true}
+        />
+        <ReportCard 
+          titulo="Promedio espera tareas" 
+          valor={metricas.promedio_espera_tareas ?? '-'}
+          subtitulo="segundos"
+        />
+        <ReportCard 
+          titulo="Mayor espera" 
+          valor={metricas.mayor_espera ?? '-'}
+          subtitulo={`Proceso ${metricas.proceso_mayor_espera ?? '-'} / Tarea ${metricas.tarea_mayor_espera ?? '-'}`}
+        />
+        <ReportCard 
+          titulo="Total procesamiento" 
+          valor={metricas.tiempo_total_todos_productos ?? '-'}
+          subtitulo="todos los productos"
+        />
+        <ReportCard 
+          titulo="Productos en espera" 
+          valor={metricas.productos_en_espera ?? 0}
+          subtitulo="cola actual"
+        />
       </div>
       
       {/* Barra de estado del sistema */}

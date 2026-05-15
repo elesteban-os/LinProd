@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal, Dict, Any, Optional
+from typing import List, Literal, Dict, Any
 from datetime import datetime
 
 
@@ -10,17 +10,28 @@ class Tarea(BaseModel):
     estado: Literal["espera", "idle", "procesando"] = "espera"
     ciclos_actuales: int = 0
     ciclos_totales: int = 3
+    tiempo_espera_total: int = 0
+
+
+class TareaConfiguracion(BaseModel):
+    """Configuración inicial de una tarea"""
+    ciclos_totales: int = 3
+
+
+class ProcesoConfiguracion(BaseModel):
+    """Configuración inicial de un proceso"""
+    proceso: int
+    tareas: List[TareaConfiguracion] = Field(default_factory=list)
 
 
 class NuevaTarea(BaseModel):
-    """Datos para crear una nueva tarea"""
-    nombre: Optional[str] = None
+    """Datos para crear una nueva tarea durante la edición"""
     ciclos_totales: int = 3
 
 
 class NuevoProceso(BaseModel):
-    """Datos para crear un nuevo proceso"""
-    nombre: Optional[str] = None
+    """Datos para crear un nuevo proceso durante la edición"""
+    nombre: str = ""
     tareas: List[NuevaTarea] = Field(default_factory=list)
 
 
@@ -30,6 +41,8 @@ class Proceso(BaseModel):
     nombre: str
     en_espera: int = 0
     tareas: List[Tarea] = Field(default_factory=list)
+    tiempo_total: int = 0
+    tiempo_inactivo: int = 0
 
 
 class EstadoSistema(BaseModel):
@@ -55,6 +68,7 @@ class ControlResponse(BaseModel):
 
 
 class StartRequest(BaseModel):
-    """Datos para iniciar la simulación con target y modo"""
-    target: int = 0
+    """Datos para iniciar la simulación con configuración y modo"""
+    procesos: List[ProcesoConfiguracion] = Field(default_factory=list)
+    cantidad_productos: int = 0
     auto: bool = True

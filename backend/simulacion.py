@@ -13,11 +13,22 @@ class SimuladorLinea:
         self.t_actual = 0
         self.procesos = self._inicializar_procesos()
         self.target_products: int = 0
+        self.primer_producto_tiempo: Optional[int] = None
+        self.ultimo_producto_tiempo: Optional[int] = None
         self.eventos = []
         self.metricas = {
             "productos_completados": 0,
             "tiempo_flujo": 0,
-            "cuello_botella": None
+            "cuello_botella": None,
+            "productos_en_espera": 0,
+            "promedio_espera_tareas": 0,
+            "mayor_espera": 0,
+            "proceso_mayor_espera": None,
+            "tarea_mayor_espera": None,
+            "tiempo_primer_producto": None,
+            "tiempo_ultimo_producto": None,
+            "tiempo_promedio_linea": 0,
+            "tiempo_total_todos_productos": 0,
         }
         self.callbacks = []
     
@@ -90,6 +101,91 @@ class SimuladorLinea:
         self.eventos.append(f"t={self.t_actual}: {tarea.nombre} agregada en {proceso.nombre}")
         return tarea
 
+    def configurar_desde_inicio(self, procesos_configuracion, cantidad_productos: int, auto: bool = True):
+        """Reemplaza la configuración actual con la enviada por el frontend"""
+        procesos = []
+        for proceso_cfg in procesos_configuracion:
+            tareas = []
+            for indice, tarea_cfg in enumerate(proceso_cfg.tareas, start=1):
+                tareas.append(
+                    Tarea(
+                        id=indice,
+                        nombre=f"Tarea {indice}",
+                        ciclos_totales=max(1, tarea_cfg.ciclos_totales),
+                        estado="espera",
+                            tiempo_espera_total=0,
+                    )
+                )
+
+            procesos.append(
+                Proceso(
+                    id=proceso_cfg.proceso,
+                    nombre=f"Proceso {proceso_cfg.proceso}",
+                    en_espera=max(0, cantidad_productos),
+                    tareas=tareas,
+                    tiempo_total=0,
+                    tiempo_inactivo=0,
+                )
+            )
+
+        self.procesos = procesos
+        self.target_products = max(0, cantidad_productos)
+        self.ejecutando = auto
+        self.t_actual = 0
+        self.eventos = []
+        self.primer_producto_tiempo = None
+        self.ultimo_producto_tiempo = None
+        self.metricas = {
+            "productos_completados": 0,
+            "tiempo_flujo": 0,
+            "cuello_botella": None,
+            "productos_en_espera": self.target_products,
+            "promedio_espera_tareas": 0,
+            "mayor_espera": 0,
+            "proceso_mayor_espera": None,
+            "tarea_mayor_espera": None,
+            "tiempo_primer_producto": None,
+            "tiempo_ultimo_producto": None,
+            "tiempo_promedio_linea": 0,
+            "tiempo_total_todos_productos": 0,
+        }
+
+    def _actualizar_metricas_reporte(self):
+        espera_total = 0
+        count_tareas = 0
+        mayor_espera = 0
+        proceso_mayor_espera = None
+        tarea_mayor_espera = None
+
+        for proceso in self.procesos:
+            for tarea in proceso.tareas:
+                count_tareas += 1
+                espera_total += getattr(tarea, 'tiempo_espera_total', 0)
+                if getattr(tarea, 'tiempo_espera_total', 0) >= mayor_espera:
+                    mayor_espera = getattr(tarea, 'tiempo_espera_total', 0)
+                    proceso_mayor_espera = proceso.id
+                    tarea_mayor_espera = tarea.id
+
+        productos_completados = self.metricas.get("productos_completados", 0)
+        tiempo_total = self.metricas.get("tiempo_total_todos_productos", 0)
+        if productos_completados > 0:
+            promedio_linea = round(tiempo_total / productos_completados, 2)
+        else:
+            promedio_linea = 0
+
+        promedio_espera = round(espera_total / count_tareas, 2) if count_tareas > 0 else 0
+
+        self.metricas.update({
+            "productos_en_espera": max(0, self.target_products - productos_completados),
+            "promedio_espera_tareas": promedio_espera,
+            "mayor_espera": mayor_espera,
+            "proceso_mayor_espera": proceso_mayor_espera,
+            "tarea_mayor_espera": tarea_mayor_espera,
+            "tiempo_primer_producto": self.primer_producto_tiempo,
+            "tiempo_ultimo_producto": self.ultimo_producto_tiempo,
+            "tiempo_promedio_linea": promedio_linea,
+        })
+
     def set_target(self, target: int, start: bool = False):
         """Establece la cantidad objetivo de productos y opcionalmente inicia"""
         try:
@@ -149,15 +245,26 @@ class SimuladorLinea:
         # Actualizar estados de tareas
         for proceso in self.procesos:
             for tarea in proceso.tareas:
+                if not hasattr(tarea, 'tiempo_espera_total'):
+                    tarea.tiempo_espera_total = 0
+
+                if tarea.estado == "espera":
+                    tarea.tiempo_espera_total += 1
+
                 if tarea.estado == "procesando":
                     tarea.ciclos_actuales += 1
                     if tarea.ciclos_actuales >= tarea.ciclos_totales:
                         tarea.estado = "idle"
                         tarea.ciclos_actuales = 0
+                        proceso.tiempo_total += self.t_actual
                         self.eventos.append(
                             f"t={self.t_actual}: {tarea.nombre} completada en {proceso.nombre}"
                         )
                         self.metricas["productos_completados"] += 1
+                        self.metricas["tiempo_total_todos_productos"] += self.t_actual
+                        if self.primer_producto_tiempo is None:
+                            self.primer_producto_tiempo = self.t_actual
+                        self.ultimo_producto_tiempo = self.t_actual
                         # Verificar si alcanzó target
                         if self.target_products > 0 and self.metricas["productos_completados"] >= self.target_products:
                             self.eventos.append(f"t={self.t_actual}: Objetivo de {self.target_products} productos alcanzado")
@@ -176,12 +283,15 @@ class SimuladorLinea:
             # Actualizar tareas en espera
             if random.random() < 0.3 and proceso.en_espera > 0:
                 proceso.en_espera -= 1
+            else:
+                proceso.tiempo_inactivo += 1
         
         # Calcular cuello de botella (proceso con más tareas en espera)
         cuellos = [(p.id, p.en_espera) for p in self.procesos]
         cuello_max = max(cuellos, key=lambda x: x[1])
         self.metricas["cuello_botella"] = f"Proceso {cuello_max[0]}"
         self.metricas["tiempo_flujo"] = self.t_actual
+        self._actualizar_metricas_reporte()
         
         # Limitar eventos a los últimos 20
         if len(self.eventos) > 20:
@@ -216,9 +326,20 @@ class SimuladorLinea:
         self.metricas = {
             "productos_completados": 0,
             "tiempo_flujo": 0,
-            "cuello_botella": None
+            "cuello_botella": None,
+            "productos_en_espera": 0,
+            "promedio_espera_tareas": 0,
+            "mayor_espera": 0,
+            "proceso_mayor_espera": None,
+            "tarea_mayor_espera": None,
+            "tiempo_primer_producto": None,
+            "tiempo_ultimo_producto": None,
+            "tiempo_promedio_linea": 0,
+            "tiempo_total_todos_productos": 0,
         }
         self.target_products = 0
+        self.primer_producto_tiempo = None
+        self.ultimo_producto_tiempo = None
     
     async def iniciar_loop(self):
         """Loop de simulación que avanza cada 1 segundo"""

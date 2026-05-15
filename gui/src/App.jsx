@@ -10,9 +10,11 @@ export default function App() {
   const [tabActivo, setTabActivo] = useState('procesos');
   const [ws, setWs] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [sesionActiva, setSesionActiva] = useState(false);
   const [modeAutomatic, setModeAutomatic] = useState(true);
   const [showStartModal, setShowStartModal] = useState(false);
   const [startTargetInput, setStartTargetInput] = useState('0');
+  const [startModeInput, setStartModeInput] = useState(1);
   
   // Estado global
   const {
@@ -57,14 +59,19 @@ export default function App() {
   // Handlers de control
   const handleInicio = async () => {
     try {
-      if (ejecutando) {
+      if (sesionActiva) {
         // Detener = reset
         await api.resetearSimulacion();
+        setSesionActiva(false);
+        setModeAutomatic(true);
+        setStartTargetInput('0');
+        setStartModeInput(1);
         return;
       }
 
       // Abrir modal para pedir target
       setStartTargetInput('0');
+      setStartModeInput(1);
       setShowStartModal(true);
     } catch (error) {
       console.error('Error al iniciar:', error);
@@ -73,11 +80,26 @@ export default function App() {
 
   const confirmStartModal = async () => {
     const target = Number(startTargetInput) || 0;
+    const auto = Number(startModeInput) === 1;
+    const procesosConfiguracion = procesos.map((proceso) => ({
+      proceso: proceso.id,
+      tareas: proceso.tareas.map((tarea) => ({
+        ciclos_totales: tarea.ciclos_totales,
+      })),
+    }));
+
     try {
-      await api.iniciarSimulacion(target, modeAutomatic);
+      setModeAutomatic(auto);
+      await api.iniciarSimulacion({
+        procesos: procesosConfiguracion,
+        cantidad_productos: target,
+        auto,
+      });
+      setSesionActiva(true);
       setShowStartModal(false);
     } catch (error) {
       console.error('Error al iniciar desde modal:', error);
+      setSesionActiva(false);
     }
   };
 
@@ -85,25 +107,21 @@ export default function App() {
     setShowStartModal(false);
   };
 
-  const handlePauseResume = async () => {
+  const handleAction = async () => {
     try {
-      if (!modeAutomatic) return;
+      if (!sesionActiva) return;
 
-      if (ejecutando) {
-        await api.pausarSimulacion();
+      if (modeAutomatic) {
+        if (ejecutando) {
+          await api.pausarSimulacion();
+        } else {
+          await api.resumeSimulacion();
+        }
       } else {
-        await api.resumeSimulacion();
+        await api.stepSimulacion();
       }
     } catch (error) {
-      console.error('Error al pausar/reanudar:', error);
-    }
-  };
-
-  const handleNext = async () => {
-    try {
-      await api.stepSimulacion();
-    } catch (error) {
-      console.error('Error al avanzar un paso:', error);
+      console.error('Error al ejecutar acción:', error);
     }
   };
 
@@ -159,11 +177,25 @@ export default function App() {
         console.error('Error al pausar al cambiar a manual:', e);
       }
     }
+
+    // Si cambiamos a automático durante una sesión manual, reanudar automáticamente
+    if (nuevo && sesionActiva && !ejecutando) {
+      try {
+        await api.resumeSimulacion();
+      } catch (e) {
+        console.error('Error al reanudar al cambiar a automático:', e);
+      }
+    }
   };
 
   const handleResetAll = async () => {
     try {
       await api.resetearSimulacion();
+      setSesionActiva(false);
+      setModeAutomatic(true);
+      setStartTargetInput('0');
+      setStartModeInput(1);
+      setShowStartModal(false);
     } catch (error) {
       console.error('Error al resetear todo:', error);
     }
@@ -185,11 +217,11 @@ export default function App() {
       {/* Header */}
       <Header
         onInicio={handleInicio}
-        onPauseResume={handlePauseResume}
-        onNext={handleNext}
+        onAction={handleAction}
         onToggleMode={handleToggleMode}
         onReset={handleResetAll}
         modeAutomatic={modeAutomatic}
+        sesionActiva={sesionActiva}
         ejecutando={ejecutando}
         tabActivo={tabActivo}
         setTabActivo={setTabActivo}
@@ -199,7 +231,7 @@ export default function App() {
       {showStartModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={cancelStartModal}></div>
-          <div className="bg-white rounded-lg shadow-xl p-6 z-10 w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-2xl p-6 z-10 w-full max-w-md border border-slate-200">
             <h3 className="text-lg font-bold mb-3">Iniciar simulación</h3>
             <p className="text-sm text-gray-600 mb-4">Especifique cuántos productos desea procesar. 0 = indefinido.</p>
             <div className="mb-4">
@@ -212,9 +244,35 @@ export default function App() {
                 className="w-full rounded-md border border-gray-300 px-3 py-2"
               />
             </div>
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">Modo inicial</label>
+                <span className="text-sm font-semibold text-slate-700">
+                  {Number(startModeInput) === 1 ? 'Automático' : 'Manual'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <span className="text-sm text-slate-600">Manual</span>
+                <button
+                  type="button"
+                  onClick={() => setStartModeInput((prev) => (Number(prev) === 1 ? 0 : 1))}
+                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors ${
+                    Number(startModeInput) === 1 ? 'bg-blue-600' : 'bg-slate-300'
+                  }`}
+                  aria-label="Cambiar modo inicial"
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow ${
+                      Number(startModeInput) === 1 ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className="text-sm text-slate-600">Automático</span>
+              </div>
+            </div>
             <div className="flex justify-end gap-2">
-              <button onClick={cancelStartModal} className="px-4 py-2 rounded-md border">Cancelar</button>
-              <button onClick={confirmStartModal} className="px-4 py-2 rounded-md bg-blue-600 text-white">Iniciar</button>
+              <button onClick={cancelStartModal} className="px-4 py-2 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50">Cancelar</button>
+              <button onClick={confirmStartModal} className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700">Iniciar</button>
             </div>
           </div>
         </div>

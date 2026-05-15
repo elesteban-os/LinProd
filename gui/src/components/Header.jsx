@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 
-export const Header = ({ onInicio, onPauseResume, onNext, onToggleMode, onReset, modeAutomatic, ejecutando, tabActivo, setTabActivo }) => {
+export const Header = ({ onInicio, onAction, onToggleMode, onReset, modeAutomatic, sesionActiva, ejecutando, tabActivo, setTabActivo }) => {
   return (
     <header className="bg-slate-900 text-white shadow-lg">
       <div className="flex items-center justify-between px-6 py-4">
@@ -42,47 +42,40 @@ export const Header = ({ onInicio, onPauseResume, onNext, onToggleMode, onReset,
           <button
             onClick={onInicio}
             className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-              ejecutando ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
+              sesionActiva ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'
             }`}
           >
-            {ejecutando ? 'Detener' : '▶ Inicio'}
+            {sesionActiva ? 'Detener' : '▶ Inicio'}
           </button>
 
-          <button
-            onClick={onPauseResume}
-            disabled={!modeAutomatic}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-              modeAutomatic
-                ? ejecutando
-                  ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                  : 'bg-green-500 hover:bg-green-600 text-white'
-                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            {modeAutomatic ? (ejecutando ? '⏸ Pausa' : '▶ Reanudar') : 'Pausa/Reanudar'}
-          </button>
+          {sesionActiva && (
+            <>
+              <button
+                onClick={onToggleMode}
+                className={`px-3 py-2 rounded-lg ${modeAutomatic ? 'bg-slate-700' : 'bg-slate-600'} text-white`}
+                title="Cambiar modo: Automático / Manual"
+              >
+                {modeAutomatic ? 'Automático' : 'Manual'}
+              </button>
 
-          <button
-            onClick={onToggleMode}
-            className={`px-3 py-2 rounded-lg ${modeAutomatic ? 'bg-slate-700' : 'bg-slate-600'} text-white`}
-            title="Cambiar modo: Automático / Manual"
-          >
-            {modeAutomatic ? 'Automático' : 'Manual'}
-          </button>
-
-          <button
-            onClick={onNext}
-            disabled={modeAutomatic}
-            className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-              modeAutomatic ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-          >
-            Next
-          </button>
+              <button
+                onClick={onAction}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                  modeAutomatic
+                    ? ejecutando
+                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                      : 'bg-green-500 hover:bg-green-600 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                }`}
+              >
+                {modeAutomatic ? (ejecutando ? '⏸ Pausa' : '▶ Reanudar') : 'Step ▶'}
+              </button>
+            </>
+          )}
 
           <button
             onClick={onReset}
-            className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white"
+            className="px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white"
           >
             Reset
           </button>

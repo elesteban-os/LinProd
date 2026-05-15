@@ -139,12 +139,12 @@ async def control_simulacion(comando: ComandoSimulacion):
 @app.post("/simulacion/start", response_model=ControlResponse)
 async def iniciar_simulacion_con_target(start: StartRequest):
     """Inicia o configura la simulación con target y modo (auto/manual)"""
-    simulador.set_target(start.target, start.auto)
+    simulador.configurar_desde_inicio(start.procesos, start.cantidad_productos, start.auto)
 
     if start.auto:
-        mensaje = f"Simulación iniciada (target={start.target})"
+        mensaje = f"Simulación iniciada (productos={start.cantidad_productos})"
     else:
-        mensaje = f"Target seteado a {start.target} (modo manual)"
+        mensaje = f"Configuración recibida (productos={start.cantidad_productos})"
 
     await broadcast_estado(simulador.obtener_estado())
 
@@ -169,7 +169,7 @@ async def crear_proceso(proceso: NuevoProceso):
     tareas_iniciales = [
         Tarea(
             id=index + 1,
-            nombre=tarea_input.nombre or f"Tarea {index + 1}",
+            nombre=f"Tarea {index + 1}",
             ciclos_totales=max(1, tarea_input.ciclos_totales),
             estado="espera",
         )
@@ -194,8 +194,7 @@ async def crear_tarea(proceso_id: int, tarea: NuevaTarea):
     """Añade una nueva tarea a un proceso"""
     nueva_tarea = simulador.agregar_tarea_a_proceso(
         proceso_id,
-        tarea.nombre,
-        tarea.ciclos_totales,
+        ciclos_totales=tarea.ciclos_totales,
     )
 
     await broadcast_estado(simulador.obtener_estado())
