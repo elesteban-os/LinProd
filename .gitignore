@@ -129,3 +129,10 @@ PROJECT_STRUCTURE.md
 QUICKSTART.md
 START_HERE.md
 TESTING.md
+# Archivos compilados de Python
+*.pyc
+*.pyo
+*.pyd
+
+# Carpetas de caché de Python
+__pycache__/
