@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 
-export const EventLog = ({ eventos }) => {
+export const EventLog = ({ eventos, tActual = 0 }) => {
   return (
     <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
       <div className="bg-slate-900 text-white px-4 py-3">
@@ -15,7 +15,7 @@ export const EventLog = ({ eventos }) => {
           <div className="space-y-2 font-mono text-sm">
             {eventos.map((evento, index) => (
               <div key={index} className="text-gray-700 flex gap-2">
-                <span className="text-gray-400 flex-shrink-0">t = 12</span>
+                <span className="text-gray-400 flex-shrink-0">t = {tActual}</span>
                 <span className="text-gray-600">{evento}</span>
               </div>
             ))}

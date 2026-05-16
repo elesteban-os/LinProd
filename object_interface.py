@@ -1,4 +1,4 @@
-from Objects.Producto import Producto
+from backend.Objects.Producto import Producto
 
 # Prueba
 # lapiz = Producto(1, "Lapiz", 10, 20)

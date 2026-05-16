@@ -23,11 +23,16 @@ class Tarea():
             self.tiempo_espera_promedio = (self.tiempo_espera_promedio + self._contador_en_espera)/2
     
     def reiniciar_tarea(self) -> None:
+        # self.ciclos_restantes = self.tiempo_proceso
+        # self._esta_procesando = False
+        # self.producto = None
+        # self._contador_en_espera = 0
         self.ciclos_restantes = self.tiempo_proceso
         self._esta_procesando = False
         self.producto = None
-        self._contador_en_espera = 0
         self.actualizar_espera_promedio()
+        self._contador_en_espera = 0
+
 
     def verificar_max_espera(self) -> None:
         if self._contador_en_espera > self.contador_max_espera:
@@ -43,7 +48,7 @@ class Tarea():
     def esta_procesando(self) -> bool:
         return self._esta_procesando
 
-    def enlazar_tarea(self, tarea: Tarea) -> None:
+    def enlazar_tarea(self, tarea: "Tarea") -> None:
         self.tarea_siguiente = tarea
         self.tarea_final = False
 

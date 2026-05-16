@@ -56,7 +56,7 @@ class Proceso:
                 self.tiempo_total = self.contador_ciclos
         else:
             self.contador_ciclos = 0 # Reiniciar si no hay productos ni tareas procesando.
-            if self._primer_producto_recibido:
+            if self._primer_producto_recibido and not self._proceso_inicial:
                 self._contador_inactivo += 1
             if self._contador_inactivo > self.tiempo_inactivo:
                 self.tiempo_inactivo = self._contador_inactivo 
@@ -88,9 +88,15 @@ class Proceso:
         """
 
     def __str__(self) -> str:
+        tareas = "\n".join(str(tarea) for tarea in self.lista_tareas)
+        proceso_siguiente = (
+            self._proceso_siguiente.id
+            if self._proceso_siguiente
+            else "No hay proceso siguiente"
+        )
         return f"""Proceso {self.id} 
-        - Tareas:\n {"\n".join(str(tarea) for tarea in self.lista_tareas)}
+        - Tareas:\n {tareas}
         ---------------------------------------------------------------
         - Tiempo Total: {self.tiempo_total} 
         - Tiempo Inactivo: {self.tiempo_inactivo}
-        - Proceso Siguiente: {self._proceso_siguiente.id if self._proceso_siguiente else "No hay proceso siguiente"}"""
+        - Proceso Siguiente: {proceso_siguiente}"""

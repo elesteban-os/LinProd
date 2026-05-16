@@ -294,7 +294,7 @@ export default function App() {
             
             {/* Panel inferior */}
             <div className="grid grid-cols-2 gap-6">
-              <EventLog eventos={eventos} />
+              <EventLog eventos={eventos} tActual={t_actual} />
               <div className="bg-white rounded-lg shadow-md border border-gray-200 p-4">
                 <h3 className="font-bold text-lg text-slate-900 mb-4">Información</h3>
                 <div className="space-y-3 text-sm text-gray-700">

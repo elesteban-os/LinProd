@@ -1,8 +1,13 @@
 import json
 from typing import List, Optional
 from queue import Queue
-from Objects.Proceso import Proceso
-from Objects.Producto import Producto
+
+try:
+    from Objects.Proceso import Proceso
+    from Objects.Producto import Producto
+except ImportError:  # pragma: no cover - fallback for package-style imports
+    from backend.Objects.Proceso import Proceso
+    from backend.Objects.Producto import Producto
 
 class GeneradorReportes:
     def __init__(self):
@@ -61,8 +66,9 @@ class GeneradorReportes:
             tiempo_primer_producto = productos_lista[0].get_tiempo_total()
             # Último elemento depositado en la cola finalizados
             tiempo_ultimo_producto = productos_lista[-1].get_tiempo_total()
-            # Tiempo total de procesamiento sumado de todos los productos
-            tiempo_total_procesamiento = sum(p.get_tiempo_total() for p in productos_lista)
+            # Tiempo total de procesamiento 
+            tiempo_total_procesamiento = productos_lista[-1].tiempo_sal - productos_lista[0].tiempo_ent
+
 
         promedio = self.calcula_tiempo_prom(productos_finalizados)
         cb = self.encontrar_cuellobotella(lista_procesos)
@@ -92,6 +98,7 @@ class GeneradorReportes:
         for proceso in lista_procesos:
             info_procesos.append({
                 "proceso": proceso.id,
+                "productos_en_espera": proceso.productos.qsize(),
                 "tareas_procesando": [tarea.id for tarea in proceso.lista_tareas if tarea.esta_procesando()],
                 "tiempo_total": proceso.tiempo_total,
                 "tiempo_inactivo": proceso.tiempo_inactivo
@@ -102,9 +109,14 @@ class GeneradorReportes:
             "tiempo_ultimo_producto": tiempo_ultimo_producto,
             "tiempo_promedio_linea": promedio,
             "tiempo_total_todos_productos": tiempo_total_procesamiento,
-            "cuello_de_botella": cb.id if cb and cb.productos.qsize() > 0 else "Ninguno",
+            # Key normalized for frontend: 'cuello_botella'
+            "cuello_botella": cb.id if cb and cb.productos.qsize() > 0 else "Ninguno",
             "promedio_espera_tareas": promedio_espera_tareas,
+            # mayor_espera: máximo observado entre tareas (0 si no hay datos)
             "mayor_espera": max_espera if max_espera > 0 else 0,
+            # Identificadores del proceso/tarea con mayor espera (None si no aplica)
+            "proceso_mayor_espera": proc_max.id if proc_max is not None else None,
+            "tarea_mayor_espera": tarea_max.id if tarea_max is not None else None,
             "estado_procesos": info_procesos
         }
         

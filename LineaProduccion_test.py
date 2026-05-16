@@ -1,10 +1,10 @@
 import json
 
-from Objects.LineaProduccion import LineaProduccion
-from Objects.Proceso import Proceso
-from Objects.Tarea import Tarea
-from Objects.Producto import Producto
-from Objects.GeneradorReportes import GeneradorReportes
+from backend.Objects.LineaProduccion import LineaProduccion
+from backend.Objects.Proceso import Proceso
+from backend.Objects.Tarea import Tarea
+from backend.Objects.Producto import Producto
+from backend.Objects.GeneradorReportes import GeneradorReportes
 import time
 
 def test_linea_produccion():
@@ -23,14 +23,14 @@ def test_linea_produccion():
     proceso1.agregar_tarea(t2)
 
     # Creando Tareas para el proceso 2
-    t3 = Tarea(3, 4)
-    t4 = Tarea(4, 5)
+    t3 = Tarea(1, 4)
+    t4 = Tarea(2, 5)
     proceso2.agregar_tarea(t3)
     proceso2.agregar_tarea(t4)
 
     # Creando Tareas para el proceso 3 (cuello de botella)
-    t5 = Tarea(5, 2)
-    t6 = Tarea(6, 1)
+    t5 = Tarea(1, 2)
+    t6 = Tarea(2, 1)
     proceso3.agregar_tarea(t5)
     proceso3.agregar_tarea(t6)
 

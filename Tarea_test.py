@@ -1,4 +1,4 @@
-from Objects.Tarea import Tarea
+from backend.Objects.Tarea import Tarea
 from queue import Queue
 
 def procesar_ciclo(tareas: list[Tarea]) -> None:

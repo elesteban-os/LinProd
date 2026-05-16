@@ -6,7 +6,7 @@ Ejecutar con: pytest
 import pytest
 from fastapi.testclient import TestClient
 from app import app
-from simulacion import simulador
+from production_logic import simulador
 
 client = TestClient(app)
 

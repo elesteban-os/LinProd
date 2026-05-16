@@ -1,5 +1,6 @@
 import asyncio
 import json
+from typing import Any, Dict
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -10,7 +11,7 @@ from models import (
     NuevoProceso, NuevaTarea,
     ControlResponse, StartRequest
 )
-from simulacion import simulador
+from production_logic import simulador
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -23,9 +24,9 @@ conexiones_ws = set()
 loop_task = None
 
 
-async def broadcast_estado(estado: EstadoSistema):
+async def broadcast_estado(estado: Dict[str, Any]):
     """Envía el estado a todos los clientes WebSocket conectados"""
-    mensaje = estado.model_dump_json()
+    mensaje = json.dumps(estado, ensure_ascii=False)
     desconectados = set()
     
     for ws in conexiones_ws:
@@ -163,7 +164,7 @@ async def step_simulacion():
     )
 
 
-@app.post("/procesos", response_model=Proceso)
+@app.post("/procesos")
 async def crear_proceso(proceso: NuevoProceso):
     """Añade un nuevo proceso a la línea"""
     tareas_iniciales = [
@@ -178,10 +179,7 @@ async def crear_proceso(proceso: NuevoProceso):
 
     nuevo_proceso = simulador.agregar_proceso(proceso.nombre, tareas_iniciales or None)
 
-    if not tareas_iniciales:
-        nuevo_proceso = simulador.procesos[-1]
-
-    logger.info(f"Proceso creado: {nuevo_proceso.nombre} (ID: {nuevo_proceso.id})")
+    logger.info(f"Proceso creado: {nuevo_proceso['nombre']} (ID: {nuevo_proceso['id']})")
     
     # Enviar estado actualizado
     await broadcast_estado(simulador.obtener_estado())
@@ -189,7 +187,7 @@ async def crear_proceso(proceso: NuevoProceso):
     return nuevo_proceso
 
 
-@app.post("/procesos/{proceso_id}/tareas", response_model=Tarea)
+@app.post("/procesos/{proceso_id}/tareas")
 async def crear_tarea(proceso_id: int, tarea: NuevaTarea):
     """Añade una nueva tarea a un proceso"""
     nueva_tarea = simulador.agregar_tarea_a_proceso(
@@ -212,7 +210,7 @@ async def eliminar_proceso(proceso_id: int):
 
     await broadcast_estado(simulador.obtener_estado())
 
-    return ControlResponse(status="success", mensaje=f"{eliminado.nombre} eliminado")
+    return ControlResponse(status="success", mensaje=f"{eliminado['nombre']} eliminado")
 
 
 @app.delete("/procesos/{proceso_id}/tareas/{tarea_id}")
@@ -225,13 +223,13 @@ async def eliminar_tarea(proceso_id: int, tarea_id: int):
 
     await broadcast_estado(simulador.obtener_estado())
 
-    return ControlResponse(status="success", mensaje=f"{eliminada.nombre} eliminada")
+    return ControlResponse(status="success", mensaje=f"{eliminada['nombre']} eliminada")
 
 
 @app.get("/procesos")
 async def obtener_procesos():
     """Retorna la lista de procesos"""
-    return simulador.procesos
+    return simulador.obtener_estado()["procesos"]
 
 
 # ==================== WebSocket ====================
@@ -245,7 +243,7 @@ async def websocket_simulacion(websocket: WebSocket):
     
     try:
         # Enviar estado inicial
-        await websocket.send_text(simulador.obtener_estado().model_dump_json())
+        await websocket.send_text(json.dumps(simulador.obtener_estado(), ensure_ascii=False))
         
         # Mantener la conexión abierta
         while True:

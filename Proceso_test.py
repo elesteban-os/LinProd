@@ -1,6 +1,6 @@
-from Objects.Proceso import Proceso
-from Objects.Tarea import Tarea
-from Objects.Producto import Producto
+from backend.Objects.Proceso import Proceso
+from backend.Objects.Tarea import Tarea
+from backend.Objects.Producto import Producto
 
 if __name__ == "__main__":
     producto1 = Producto(idProducto=1, nombre="Producto1", tiempo_ent=0, tiempo_sal=0)

@@ -1,8 +1,13 @@
 import time
 from typing import List, Optional
 from queue import Queue
-from Objects.Proceso import Proceso
-from Objects.Producto import Producto
+
+try:
+    from Objects.Proceso import Proceso
+    from Objects.Producto import Producto
+except ImportError:  # pragma: no cover - fallback for package-style imports
+    from backend.Objects.Proceso import Proceso
+    from backend.Objects.Producto import Producto
 
 class LineaProduccion:
     def __init__(self):
